@@ -32,13 +32,16 @@ namespace PictureAState
         bool _isPreviewing;
         DisplayRequest _displayRequest = new DisplayRequest();
         Image currentFilter = null;
-
+        
         IReadOnlyList<StorageFile> filters = null;
         int currentFilterIndex = 0;
 
         bool imageCaptured = false;
         bool canAddFilter = false; // allow up to 5 filters to be added to one photo
         int filterCount = 0;
+
+        // replace with Key,Value list
+        UIElement[] appliedFilters = new UIElement[5];
 
         public MainPage()
         {
@@ -48,9 +51,7 @@ namespace PictureAState
 
             //Application.Current.Suspending += Current_Suspending;
 
-            RectangleGeometry bounds = new RectangleGeometry();
-            //bounds.Rect = new Rect(0, 0, this.renderTarget.Width, this.renderTarget.Height);
-            //this.renderTarget.Clip = bounds;
+            LoadFilters();
 
         }
 
@@ -66,6 +67,18 @@ namespace PictureAState
 
         private async void SetupCamera()
         {
+
+            if(imageCaptured)
+            {
+                ClearView();
+
+                currentFilter = null;
+                currentFilterIndex = 0;
+                imageCaptured = false;
+                canAddFilter = false;
+                filterCount = 0;
+                appliedFilters = new UIElement[5];
+            }
 
             try
             {
@@ -91,11 +104,44 @@ namespace PictureAState
             }
         }
 
-        private async void ApplyFilter(object sender, RoutedEventArgs e)
+        private void ApplyFilter(object sender, RoutedEventArgs e)
         {
-            if (canAddFilter == false)
+            if (canAddFilter == false || filters.Count == 0)
                 return;
 
+            Image filter = new Image();
+            filter = currentFilter;
+
+            appliedFilters[filterCount] = filter;
+            filterCount++;
+            currentFilter = null;
+
+            canAddFilter = (filterCount == 5) ? !canAddFilter : canAddFilter;
+
+            if (canAddFilter == false)
+            {
+                Debug.WriteLine("Cannot apply filter");
+                this.messageText.Text = "Filter Limit Reached";
+                this.renderTarget.Children.Remove(currentFilter);
+            }
+            else
+            {
+                currentFilter = new Image();
+                currentFilter.VerticalAlignment = VerticalAlignment.Center;
+                currentFilter.HorizontalAlignment = HorizontalAlignment.Center;
+                Canvas.SetZIndex(currentFilter, 1);
+
+                BitmapImage bm = new BitmapImage(new Uri(filters[currentFilterIndex].Path));
+                currentFilter.Source = bm;
+
+                this.renderTarget.Children.Add(currentFilter);
+
+            }
+
+        }
+
+        private async void LoadFilters()
+        {
             StorageFolder assetsFolder = await Windows.ApplicationModel.Package.Current.InstalledLocation.GetFolderAsync("Assets");
             StorageFolderQueryResult results = assetsFolder.CreateFolderQuery();
             IReadOnlyList<StorageFolder> folders = await results.GetFoldersAsync();
@@ -103,7 +149,7 @@ namespace PictureAState
             StorageFolder filterFolder = folders.Where(fol => fol.DisplayName == "Filters").First();
             filters = await filterFolder.GetFilesAsync();
 
-            /*Debug.WriteLine("Displaying Folder");
+            Debug.WriteLine("Displaying Folder");
             Debug.WriteLine(filterFolder.DisplayName);
 
             Debug.WriteLine("Displaying filter names");
@@ -111,33 +157,38 @@ namespace PictureAState
             foreach (StorageFile fil in filters)
             {
                 Debug.WriteLine(fil.DisplayName);
-            }*/
+            }
 
+            if (filters != null && filters.Count != 0)
+                canAddFilter = true;
+
+        }
+
+        private void ShowFilters(object sender, RoutedEventArgs e)
+        {
+            if (canAddFilter == false || filters.Count == 0)
+                return;
 
             Image filter = new Image();
             filter.VerticalAlignment = VerticalAlignment.Center;
             filter.HorizontalAlignment = HorizontalAlignment.Center;
 
-            BitmapImage bm = new BitmapImage(new Uri(filters[0].Path));
-            filter.Source = bm;
+            BitmapImage bm = null;
 
-            Canvas.SetZIndex(filter, 1);
-            this.renderTarget.Children.Add(filter);
+            // shows the first filter
+            if (currentFilter == null)
+            {
+                bm = new BitmapImage(new Uri(filters[0].Path));
+                filter.Source = bm;
+            }
+            else
+            {
+                bm = new BitmapImage(new Uri(filters[currentFilterIndex].Path));
+            }
 
             currentFilter = filter;
-            filterCount++;
-            canAddFilter = (filterCount == 5) ? !canAddFilter : canAddFilter;
-
-            if (canAddFilter == false)
-            {
-                Debug.WriteLine("Cannot apply filter");
-            }
-            
-        }
-
-        private void LoadFilters()
-        {
-
+            Canvas.SetZIndex(filter, 1);
+            this.renderTarget.Children.Add(filter);
         }
 
         private async Task CleanUp()
@@ -268,8 +319,10 @@ namespace PictureAState
             if (imageCaptured == false)
                 return;
 
+            canAddFilter = false;
+
             // location:
-            // C:\Users\Beasley\AppData\Local\Packages\7042ff83-dc0c-4816-a1a0-107ef134b815_zx9gxz867859y\LocalState
+            // C:\Users\{USER}\AppData\Local\Packages\7042ff83-dc0c-4816-a1a0-107ef134b815_zx9gxz867859y\LocalState
             StorageFolder assetsFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
             StorageFile file = null;
 
@@ -282,19 +335,15 @@ namespace PictureAState
                 Debug.WriteLine(ex.Message);
             }
 
+            this.renderTarget.Children.Remove(currentFilter);
+            currentFilter = null;
+
             RenderTargetBitmap targetBitmap = new RenderTargetBitmap();
             await targetBitmap.RenderAsync(this.renderTarget);
 
             await CleanUp();
+            ClearView();
 
-            foreach (UIElement child in this.renderTarget.Children)
-            {
-                if (child != this.camView)
-                    this.renderTarget.Children.Remove(child);
-            }
-
-            this.renderTarget.Children.Remove(currentFilter);
-            currentFilter = null;
 
             this.renderedImage.Source = targetBitmap;
             Image newImage = new Image();
@@ -324,6 +373,19 @@ namespace PictureAState
 
         }
 
+        private void ClearView()
+        {
+            foreach (UIElement child in this.renderTarget.Children)
+            {
+                if (child != this.camView)
+                    this.renderTarget.Children.Remove(child);
+            }
+
+            //this.renderTarget.Children.Remove(currentFilter);
+            //currentFilter = null;
+
+        }
+
         private async void CaptureImage(object sender, RoutedEventArgs e)
         {
             
@@ -331,14 +393,15 @@ namespace PictureAState
                 return;
 
             await Task.Delay(500);
-            this.photoTimer.Text = "3";
+            this.messageText.Text = "3";
             await Task.Delay(1000);
-            this.photoTimer.Text = "2";
+            this.messageText.Text = "2";
             await Task.Delay(1000);
-            this.photoTimer.Text = "1";
+            this.messageText.Text = "1";
             await Task.Delay(1000);
-            this.photoTimer.Text = "Wolves Up";
+            this.messageText.Text = "Wolves Up";
             await Task.Delay(500);
+            this.messageText.Text = "";
 
             RenderTargetBitmap targetBitmap = new RenderTargetBitmap();
             await targetBitmap.RenderAsync(this.renderTarget);
@@ -359,10 +422,32 @@ namespace PictureAState
         {
             if (filters == null || filters.Count == 0)
                 return;
-            
+
             // check if currentFilterIndex != filters.Count - 1
             // if not, set the currentFilter to the next filter
-            // increase fiilter count
+            // increase filter count
+
+            if (currentFilterIndex != filters.Count - 1)
+            {
+
+                if (currentFilter != null)
+                    this.renderTarget.Children.Remove(currentFilter);
+
+                currentFilterIndex++;
+
+                Image filter = new Image();
+                filter.VerticalAlignment = VerticalAlignment.Center;
+                filter.HorizontalAlignment = HorizontalAlignment.Center;
+
+                BitmapImage bm = new BitmapImage(new Uri(filters[currentFilterIndex].Path));
+                filter.Source = bm;
+
+                Canvas.SetZIndex(filter, 1);
+                this.renderTarget.Children.Add(filter);
+
+                currentFilter = filter;
+
+            }
 
         }
 
@@ -374,6 +459,29 @@ namespace PictureAState
             // check if currentFilterIndex != 0
             // if not, set the currentFilter to the previous filter
             // decrease fiilter count
+
+            if (currentFilterIndex != 0)
+            {
+
+                if (currentFilter != null)
+                    this.renderTarget.Children.Remove(currentFilter);
+
+                currentFilterIndex--;
+
+                Image filter = new Image();
+                filter.VerticalAlignment = VerticalAlignment.Center;
+                filter.HorizontalAlignment = HorizontalAlignment.Center;
+
+                BitmapImage bm = new BitmapImage(new Uri(filters[currentFilterIndex].Path));
+                filter.Source = bm;
+
+                Canvas.SetZIndex(filter, 1);
+                this.renderTarget.Children.Add(filter);
+
+                currentFilter = filter;
+
+            }
+
         }
     }
 }

@@ -107,7 +107,10 @@
     <None Include="PictureAState_TemporaryKey.pfx" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="Assets\Filters\AStateAlum.png" />
     <Content Include="Assets\Filters\AStateLogo.png" />
+    <Content Include="Assets\Filters\RedWolf.svg.png" />
+    <Content Include="Assets\Filters\RedWolfShort.svg.png" />
     <Content Include="Assets\howl.jpg" />
     <Content Include="Properties\Default.rd.xml" />
     <Content Include="Assets\LockScreenLogo.scale-200.png" />
