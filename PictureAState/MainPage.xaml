@@ -19,23 +19,24 @@
             <CaptureElement x:Name="camView" Stretch="UniformToFill" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Margin="0" Grid.Column="0"/>
         </Grid>
 
-        <TextBlock x:Name="messageText" Text="Timer" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Column="1" FontFamily="MV BOLI" FontSize="25"/>
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Start Stream" Grid.Column="1" Click="StartStream" Margin="206,241,206,369"/>
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Stop Stream" Grid.Column="1" Click="StopStream" Margin="206,278,206,332"/>
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Add Filters" Grid.Column="1" Click="ShowFilters" Margin="206,319,206,291"/>
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Apply Filter" Grid.Column="1" Click="ApplyFilter" Margin="206,359,206,251"/>
-        <Button Height="30" Width="45" Content="-" Grid.Column="1" Click="GetPrevFilter" Margin="156,359,0,251"/>
-        <Button Height="30" Width="45" Content="+" Grid.Column="1" Click="GetNextFilter" Margin="311,359,0,251"/>
-        <RepeatButton Height="30" Width="45" Content="U" Grid.Column="1" Click="MoveFilterUp" Margin="206,397,0,213"/>
-        <RepeatButton Height="30" Width="45" Content="D" Grid.Column="1" Click="MoveFilterDown" Margin="262,397,0,213"/>
-        <RepeatButton Height="30" Width="45" Content="L" Grid.Column="1" Click="MoveFilterLeft" Margin="206,433,0,177"/>
-        <RepeatButton Height="30" Width="45" Content="R" Grid.Column="1" Click="MoveFilterRight" Margin="262,433,0,177"/>
-        <RepeatButton Height="30" Width="45" Content="-" Grid.Column="1"  Click="DecreaseFilterScale" Margin="206,470,0,140"/>
-        <RepeatButton Height="30" Width="45" Content="+" Grid.Column="1" Click="IncreaseFilterScale" Margin="262,470,0,140"/>
-        <RepeatButton Height="30" Width="45" Content="rl" Grid.Column="1" Click="RotateFilterLeft" Margin="206,507,0,103"/>
-        <RepeatButton Height="30" Width="45" Content="rr" Grid.Column="1" Click="RotateFilterRight" Margin="262,507,0,103"/>
+        <TextBlock x:Name="messageText" VerticalAlignment="Top" HorizontalAlignment="Center" Grid.Column="1" FontFamily="MV BOLI" FontSize="25" Margin="113,4,332,0"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Start Stream" Grid.Column="1" Click="StartStream" Margin="206,125,206,485"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Stop Stream" Grid.Column="1" Click="StopStream" Margin="206,162,206,448"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Add Filters" Grid.Column="1" Click="ShowFilters" Margin="206,203,206,407"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Apply Filter" Grid.Column="1" Click="ApplyFilter" Margin="206,243,206,367"/>
+        <Button Height="30" Width="45" Content="-" Grid.Column="1" Click="GetPrevFilter" Margin="156,243,0,367"/>
+        <Button Height="30" Width="45" Content="+" Grid.Column="1" Click="GetNextFilter" Margin="311,243,0,367"/>
+        <RepeatButton Height="30" Width="45" Content="U" Grid.Column="1" Click="MoveFilterUp" Margin="206,281,0,329"/>
+        <RepeatButton Height="30" Width="45" Content="D" Grid.Column="1" Click="MoveFilterDown" Margin="262,281,0,329"/>
+        <RepeatButton Height="30" Width="45" Content="L" Grid.Column="1" Click="MoveFilterLeft" Margin="206,317,0,293"/>
+        <RepeatButton Height="30" Width="45" Content="R" Grid.Column="1" Click="MoveFilterRight" Margin="262,317,0,293"/>
+        <RepeatButton Height="30" Width="45" Content="-" Grid.Column="1"  Click="DecreaseFilterScale" Margin="206,354,0,256"/>
+        <RepeatButton Height="30" Width="45" Content="+" Grid.Column="1" Click="IncreaseFilterScale" Margin="262,354,0,256"/>
+        <RepeatButton Height="30" Width="45" Content="rl" Grid.Column="1" Click="RotateFilterLeft" Margin="206,391,0,219"/>
+        <RepeatButton Height="30" Width="45" Content="rr" Grid.Column="1" Click="RotateFilterRight" Margin="262,391,0,219"/>
         <Image x:Name="renderedImage" Width="150" Height="150" VerticalAlignment="Top" HorizontalAlignment="Right" Grid.Column="1"/>
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Capture" Grid.Column="1" Click="CaptureImage" Margin="206,545,206,65"/>
-        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Save" Grid.Column="1" Click="SaveImage" Margin="206,583,206,27"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Capture" Grid.Column="1" Click="CaptureImage" Margin="206,429,206,181"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Save" Grid.Column="1" Click="SaveImage" Margin="206,467,206,143"/>
+        <Button VerticalAlignment="Center" HorizontalAlignment="Center" Height="30" Width="100" Content="Print" Grid.Column="1" Click="PrintImage" Margin="206,507,206,103"/>
     </Grid>
 </Page>

@@ -8,6 +8,7 @@ using System.Threading.Tasks;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Graphics.Imaging;
+using Windows.Graphics.Printing;
 using Windows.Media.Capture;
 using Windows.Media.MediaProperties;
 using Windows.Storage;
@@ -22,6 +23,7 @@ using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
+using Windows.UI.Xaml.Printing;
 
 namespace PictureAState
 {
@@ -39,16 +41,22 @@ namespace PictureAState
         bool imageCaptured = false;
         bool canAddFilter = false; // allow up to 5 filters to be added to one photo
         int filterCount = 0;
+        Image capturedImage = new Image();
 
         // replace with Key,Value list
         UIElement[] appliedFilters = new UIElement[5];
+
+        PrintManager printMan = PrintManager.GetForCurrentView();
+
+        PrintDocument printDoc = new PrintDocument();
+        IPrintDocumentSource printDocSource;
+
 
         public MainPage()
         {
             this.InitializeComponent();
 
             //SetupCamera();
-
             //Application.Current.Suspending += Current_Suspending;
 
             LoadFilters();
@@ -344,11 +352,12 @@ namespace PictureAState
             await CleanUp();
             ClearView();
 
-
             this.renderedImage.Source = targetBitmap;
             Image newImage = new Image();
             newImage.Source = targetBitmap;
             this.renderTarget.Children.Add(newImage);
+
+            capturedImage.Source = targetBitmap;
 
             if (file != null)
             {
@@ -381,8 +390,8 @@ namespace PictureAState
                     this.renderTarget.Children.Remove(child);
             }
 
-            //this.renderTarget.Children.Remove(currentFilter);
-            //currentFilter = null;
+            this.renderTarget.Children.Remove(currentFilter);
+            currentFilter = null;
 
         }
 
@@ -399,8 +408,6 @@ namespace PictureAState
             await Task.Delay(1000);
             this.messageText.Text = "1";
             await Task.Delay(1000);
-            this.messageText.Text = "Wolves Up";
-            await Task.Delay(500);
             this.messageText.Text = "";
 
             RenderTargetBitmap targetBitmap = new RenderTargetBitmap();
@@ -413,6 +420,13 @@ namespace PictureAState
             newImage.Source = targetBitmap;
             this.renderTarget.Children.Add(newImage);
 
+            Rect rect = new Rect();
+            rect = this.renderTarget.RenderTransform.TransformBounds(new Rect(this.renderTarget.RenderTransformOrigin, this.renderTarget.RenderSize));
+            RectangleGeometry geo = new RectangleGeometry();
+            geo.Rect = rect;
+
+            this.renderTarget.Clip = geo;
+
             canAddFilter = true;
             imageCaptured = true;
 
@@ -422,11 +436,7 @@ namespace PictureAState
         {
             if (filters == null || filters.Count == 0)
                 return;
-
-            // check if currentFilterIndex != filters.Count - 1
-            // if not, set the currentFilter to the next filter
-            // increase filter count
-
+            
             if (currentFilterIndex != filters.Count - 1)
             {
 
@@ -455,11 +465,7 @@ namespace PictureAState
         {
             if (filters == null || filters.Count == 0)
                 return;
-
-            // check if currentFilterIndex != 0
-            // if not, set the currentFilter to the previous filter
-            // decrease fiilter count
-
+            
             if (currentFilterIndex != 0)
             {
 
@@ -481,7 +487,50 @@ namespace PictureAState
                 currentFilter = filter;
 
             }
+        }
 
+        private void PrintImage(object sender, RoutedEventArgs e)
+        {
+            /*PrintDocument printDoc = new PrintDocument();
+            IPrintDocumentSource printDocSource = printDoc.DocumentSource;
+
+            PrintManager printMan = PrintManager.GetForCurrentView();*/
+
+            printDoc.Paginate += PrepPrint;
+            printDocSource = printDoc.DocumentSource;
+
+            printMan.PrintTaskRequested += PrintTaskRequested;
+        }
+
+        private void PrepPrint(object sender, PaginateEventArgs e)
+        {
+            PrintTaskOptions printOptions = ((PrintTaskOptions)e.PrintTaskOptions);
+            printOptions.ColorMode = PrintColorMode.Color;
+            //printOptions.MediaType = PrintMediaType.Photographic;
+            printOptions.MediaType = PrintMediaType.Default;
+
+            PrintPageDescription pageDescription = printOptions.GetPageDescription(0);
+
+            //printDoc.SetPreviewPage(1, capturedImage);
+        }
+
+        private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
+        {
+            PrintTask printTask = null;
+
+            printTask = e.Request.CreatePrintTask("Picture A-State", sourceRequested => 
+            {
+                printTask.Completed += (s, args) =>
+                {
+                    if (args.Completion == PrintTaskCompletion.Failed)
+                    {
+                        Debug.WriteLine("Unable to print");
+                    }
+                };
+
+                sourceRequested.SetSource(printDocSource);
+
+            });
         }
     }
 }
