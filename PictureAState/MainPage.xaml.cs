@@ -44,11 +44,10 @@ namespace PictureAState
         Image capturedImage = new Image();
 
         // replace with Key,Value list
+        bool isRegistered = false;
         UIElement[] appliedFilters = new UIElement[5];
-
-        PrintManager printMan = PrintManager.GetForCurrentView();
-
         PrintDocument printDoc = new PrintDocument();
+
         IPrintDocumentSource printDocSource;
 
 
@@ -71,6 +70,30 @@ namespace PictureAState
                 await CleanUp();
                 deferral.Complete();
             }
+
+            UnregisterForPrinting();
+
+        }
+
+        private void RegisterForPrinting()
+        {
+
+            printDoc.Paginate += PrintDocPaginate;
+            printDoc.AddPages += PrintDocAddPages;
+            printDocSource = printDoc.DocumentSource;
+
+            PrintManager printMan = PrintManager.GetForCurrentView();
+            printMan.PrintTaskRequested += PrintManPrintTaskRequested;
+        }
+
+        private void UnregisterForPrinting()
+        {
+
+            printDoc.Paginate -= PrintDocPaginate;
+            printDoc.AddPages -= PrintDocAddPages;
+
+            PrintManager printMan = PrintManager.GetForCurrentView();
+            printMan.PrintTaskRequested -= PrintManPrintTaskRequested;
         }
 
         private async void SetupCamera()
@@ -110,6 +133,31 @@ namespace PictureAState
             {
                 Debug.WriteLine(e.Message);
             }
+        }
+
+        private async Task CleanUp()
+        {
+            if (camStream != null)
+            {
+                if (_isPreviewing)
+                {
+                    await camStream.StopPreviewAsync();
+                }
+
+                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
+                {
+                    camView.Source = null;
+
+                    if (_displayRequest != null)
+                    {
+                        _displayRequest.RequestRelease();
+                    }
+
+                    camStream.Dispose();
+                    camStream = null;
+                });
+            }
+
         }
 
         private void ApplyFilter(object sender, RoutedEventArgs e)
@@ -199,29 +247,6 @@ namespace PictureAState
             this.renderTarget.Children.Add(filter);
         }
 
-        private async Task CleanUp()
-        {
-            if (camStream != null)
-            {
-                if (_isPreviewing)
-                {
-                    await camStream.StopPreviewAsync();
-                }
-
-                await Dispatcher.RunAsync(Windows.UI.Core.CoreDispatcherPriority.Normal, () =>
-                {
-                    camView.Source = null;
-
-                    if (_displayRequest != null)
-                    {
-                        _displayRequest.RequestRelease();
-                    }
-
-                    camStream.Dispose();
-                    camStream = null;
-                });
-            }
-        }
 
         private async void StopStream(object sender, RoutedEventArgs e)
         {
@@ -489,20 +514,28 @@ namespace PictureAState
             }
         }
 
-        private void PrintImage(object sender, RoutedEventArgs e)
+        private async void PrintImage(object sender, RoutedEventArgs e)
         {
             /*PrintDocument printDoc = new PrintDocument();
             IPrintDocumentSource printDocSource = printDoc.DocumentSource;
 
             PrintManager printMan = PrintManager.GetForCurrentView();*/
+            if (capturedImage == null)
+                return;
+            if(isRegistered == false)
+                RegisterForPrinting();
 
-            printDoc.Paginate += PrepPrint;
-            printDocSource = printDoc.DocumentSource;
+            await PrintManager.ShowPrintUIAsync();
 
-            printMan.PrintTaskRequested += PrintTaskRequested;
         }
 
-        private void PrepPrint(object sender, PaginateEventArgs e)
+        private void PrintDocAddPages(object sender, AddPagesEventArgs e)
+        {
+            printDoc.AddPage(capturedImage);
+            ((PrintDocument)sender).AddPagesComplete();
+        }
+
+        private void PrintDocPaginate(object sender, PaginateEventArgs e)
         {
             PrintTaskOptions printOptions = ((PrintTaskOptions)e.PrintTaskOptions);
             printOptions.ColorMode = PrintColorMode.Color;
@@ -514,7 +547,7 @@ namespace PictureAState
             //printDoc.SetPreviewPage(1, capturedImage);
         }
 
-        private void PrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
+        private void PrintManPrintTaskRequested(PrintManager sender, PrintTaskRequestedEventArgs e)
         {
             PrintTask printTask = null;
 
@@ -526,11 +559,23 @@ namespace PictureAState
                     {
                         Debug.WriteLine("Unable to print");
                     }
+
+                    if (args.Completion == PrintTaskCompletion.Canceled || args.Completion == PrintTaskCompletion.Abandoned)
+                    {
+                        Debug.WriteLine("Print Task canceled or abandoned");
+                    }
+
+                    if (args.Completion == PrintTaskCompletion.Submitted)
+                    {
+                        Debug.WriteLine("Print Submitted");
+                    }
                 };
 
                 sourceRequested.SetSource(printDocSource);
 
             });
+
+            printTask.IsPreviewEnabled = false;
         }
     }
 }
