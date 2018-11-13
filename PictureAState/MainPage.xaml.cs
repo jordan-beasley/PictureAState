@@ -269,7 +269,7 @@ namespace PictureAState
                 return;
 
             // location:
-            // C:\Users\Beasley\AppData\Local\Packages\7042ff83-dc0c-4816-a1a0-107ef134b815_zx9gxz867859y\LocalState
+            // C:\Users\{USER}\AppData\Local\Packages\7042ff83-dc0c-4816-a1a0-107ef134b815_zx9gxz867859y\LocalState
             StorageFolder assetsFolder = Windows.Storage.ApplicationData.Current.LocalFolder;
             StorageFile file = null;
 
